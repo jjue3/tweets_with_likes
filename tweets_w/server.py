@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash
 from mysqlconnection import connectToMySQL
 app = Flask(__name__)
 app.secret_key = 'secret_key'
@@ -25,7 +25,7 @@ def registration():
     if len(request.form['first_name']) < 2 or not name_rex.match(request.form['first_name']): #Check to see if first name is long enough or if it has a number
         is_valid = False
         flash("Please enter your first name")
-        print('false')
+        # print('false')
         return redirect('/')
     if len(request.form['last_name']) < 2 or not name_rex.match(request.form['last_name']): #Check to see if last name is long enough or if it has a number
         is_valid = False
@@ -35,12 +35,12 @@ def registration():
     if not email_rex.match(request.form['email']): #Check if the email has the requirements
         is_valid = False
         flash("Please enter an email")
-        print('false')
+        # print('false')
         return redirect('/')        
     if existing_email: #Check if the email exists in the database
         is_valid = False
         flash("Email already in use")
-        print('false')
+        # print('false')
         return redirect('/')
     if not password_rex.match(request.form['password']): #Checks if passward has more than 6 characters, has symbols @#$, and has a capital
         is_valid = False
@@ -50,12 +50,12 @@ def registration():
     if request.form['password'] != request.form['passwordc']: #Check if the confirmation password matches the entered password
         is_valid = False
         flash("Password does not match")
-        print('false')    
+        # print('false')    
         return redirect('/')
     if is_valid: #addes to the database
         flash("Successfully added!")
         password = bcrypt.generate_password_hash(request.form['password'])
-        print(password)
+        # print(password)
         data = {
                 "first_name": request.form["first_name"],
                 "last_name": request.form["last_name"],
@@ -67,6 +67,8 @@ def registration():
         userlog = mysql.query_db(query, data)
         session['email']= request.form['email']
         session['name'] = request.form['first_name']
+        session['id']= userlog
+        # print(session['id'])
         return redirect('/dashboard')
 
 @app.route('/login', methods=['POST'])
@@ -92,33 +94,93 @@ def login():
         if password_check:
             session['name'] = query_result[0]["first_name"]
             session['id'] = query_result[0]["id"]
-            print(session['name'])
+            # print(session['name'])
             return redirect('/dashboard')
     else:
         flash("Email/Password is incorrect")
         return redirect('/')
 
-@app.route('/tweets/{tweet_id}/add_like', methods=['POST']) #Add likes
-def addlike(tweet_id):
-    mysql = connectToMySQL('reg')         
-    query = "INSERT INTO likes (user_id, tweet_id, created_at, updated_at) VALUES (%(user_id)s, %(tweet_id)s, NOW(), NOW());"
-    data = {
-        "user_id" : session['id']
-        }
-    userlog = mysql.query_db(query, data)
+@app.route('/tweets/<tweets_id>/add_like', methods=['POST']) #Add likes
+def addlike(tweets_id):
+    # mysql = connectToMySQL('reg')         
+    # query = "INSERT INTO likes (user_id, tweet_id, created_at, updated_at) VALUES (%(user_id)s, %(tweet_id)s, NOW(), NOW());"
+    # data = {
+    #     "user_id" : session['id']
+    #     }
+    # userlog = mysql.query_db(query, data)
     print('THIS IS WHAT I AM LOOKING FOR!!!!!')
-    print(tweet_id) 
+    print(tweets_id) 
     return redirect('/dashboard')      
 
-# @app.route('/tweets/{tweet_id}/delete')
-# def delete():
-    
-#     return redirect('/dashboard')        
+@app.route('/tweets/<tweets_id>/delete', methods=['GET','POST']) #Deletes Messages
+def delete(tweets_id):
+    session['tweets_id']= tweets_id
+    mysql = connectToMySQL('reg')  
+    query = 'SELECT * FROM tweets WHERE user_id =%(user_id)s AND id =%(id)s;'    
+    data = {
+        "user_id" : session['id'],
+        "id" : session['tweets_id']
+        }  
+    creater_id = mysql.query_db(query, data)
+    if creater_id:
+        print("This is working now aren't you happy!!!!!!!")
+        mysql = connectToMySQL('reg')
+        query = 'DELETE FROM tweets WHERE user_id =%(user_id)s AND id =%(id)s;'
+        data = {
+        "user_id" : session['id'],
+        "id" : session['tweets_id']
+        }  
+        mysql.query_db(query, data)        
+        flash("Deleted Post")
+        return redirect('/dashboard')
+    else:
+        flash("Not your tweet")    
+        return redirect('/dashboard')  
 
-@app.route('/logout')
+@app.route('/tweets/<tweets_id>/edit', methods=['GET','POST']) #Renders Edit Page
+def edit(tweets_id):
+    name = session['name']
+    session['tweets_id']= tweets_id
+    tweets_id = session['tweets_id']
+    mysql = connectToMySQL('reg')  
+    query = 'SELECT * FROM tweets WHERE user_id =%(user_id)s AND id =%(id)s;'    
+    data = {
+        "user_id" : session['id'],
+        "id" : session['tweets_id']
+        }  
+    creater_id = mysql.query_db(query, data)
+    if creater_id:
+        return render_template('edit.html', tweets_id=tweets_id, name=name)
+    else:
+        flash("Not your tweet")    
+        return redirect('/dashboard') 
+
+@app.route('/tweets/<tweets_id>/update', methods=['GET','POST']) #Update Message
+def update(tweets_id):
+    session['tweets_id']= tweets_id
+    print(session['tweets_id'])
+    print('wooooooooooooooow')
+    print(tweets_id)
+    if len(request.form['message'])>255 or len(request.form['message'])<1:
+        flash('Invalid amount of characters')
+        return redirect('/tweets/<tweets_id>/edit')
+    else:
+        print("This is working now aren't you happy!!!!!!!")
+        mysql = connectToMySQL('reg')
+        query = 'UPDATE tweets SET content =%(content)s, updated_at = NOW() WHERE id =%(id)s;'
+        data = {
+            "content" : request.form['message'],
+            "id" : session['tweets_id']
+            }  
+        mysql.query_db(query, data)        
+        flash("Edit Post")
+        return redirect('/dashboard')
+
+
+@app.route('/logout') #Clears the session
 def logout():
     session.clear()
-    print(session)
+    # print(session)
     return redirect('/')         
 
 @app.route('/dashboard') #Displays all messages
@@ -126,7 +188,7 @@ def dashboardren():
     name = session['name']
     mysql = connectToMySQL('reg')       
     tweets = mysql.query_db('SELECT * FROM tweets ORDER BY id DESC;')
-    print(tweets)
+    # print(tweets)
     return render_template('dashboard.html', tweets = tweets, name = name)
 
 @app.route('/tweets/create', methods=['POST']) #Creates and posts messages in the database
@@ -142,8 +204,8 @@ def createpost():
             "user_id" : session['id']
             }
         mysql.query_db(query, data)
-        print(session['id'])
-        print(request.form['message'])
+        # print(session['id'])
+        # print(request.form['message'])
         flash('Posted!')
         return redirect('/dashboard')
 

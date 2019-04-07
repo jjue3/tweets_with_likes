@@ -16,13 +16,22 @@
             <p>Welcome, {{ name }}</p>
             <a href='/logout'>Log Out</a>
         </div>
-        <form action='/tweets'>
+        <form action='/tweets/{{tweets_id}}/update' method="POST">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            <h3>Edit Tweet:</h3>
+            <textarea input="text" type="text" id="commentbox" name="message"></textarea>
+            <br>
             <input type="submit" value="Update">
         </form>
-        <form action=''>
-                <input type="submit" value="Cancel">
-            </form> 
+        <form action='/dashboard'>
+            <input type="submit" value="Cancel">
+        </form>
     </div>
 </body>
-
 </html>

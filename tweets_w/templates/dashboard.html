@@ -36,15 +36,14 @@
             <tbody>
                 <tr>
                     <td>{{tweets.content}}
-
                         <p>{{tweets.id}}</p>
-                        <form action='/tweet/{{tweets.id}}/add_like' method='POST'>
+                        <form action='/tweets/{{tweets.id}}/add_like' method='POST'>
                             <input type="submit" value="Like">
                         </form>
-                        <form action=''>
+                        <form action='/tweets/{{tweets.id}}/edit' method='GET'>
                                 <input type="submit" value="Edit">
                             </form> 
-                        <form action=''>
+                        <form action='/tweets/{{tweets.id}}/delete' method='POST'>
                             <input type="submit" value="Delete">
                         </form>  
                     </td>
