@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="topbar">
+            <p>Dojo Tweets</p>
+            <a href='/users'>users</a>
+            <p>Welcome, {{ name }}</p>
+            <a href='/logout'>Log Out</a>
+        </div>
+        <form action="/tweets/create" method="POST">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            <h3>Write a Tweet:</h3>
+            <textarea input="text" type="text" id="commentbox" name="message"></textarea>
+            <br>
+            <input type="submit" value="Submit">
+        </form>
+        <h3>Your Feed:</h3>
+        <table>
+            {% for tweets in tweets %}
+            <tbody>
+                <tr>
+                    <td>{{tweets.content}}
+
+                        <p>{{tweets.id}}</p>
+                        <form action='/tweet/{{tweets.id}}/add_like' method='POST'>
+                            <input type="submit" value="Like">
+                        </form>
+                        <form action=''>
+                                <input type="submit" value="Edit">
+                            </form> 
+                        <form action=''>
+                            <input type="submit" value="Delete">
+                        </form>  
+                    </td>
+                </tr>
+            </tbody>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+
+</html>
