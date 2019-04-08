@@ -31,7 +31,7 @@
                     <td>{{users.first_name}} {{users.last_name}}</td>
                     <td>{{users.email}}</td>
                     <td>
-                        <form action='/tweets'>
+                        <form action='/tweets/{{users.id}}/follow' method='POST'>
                             <input type="submit" value="Follow">
                         </form>
                     </td>

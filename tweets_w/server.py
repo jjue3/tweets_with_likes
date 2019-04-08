@@ -186,6 +186,33 @@ def update(tweets_id):
         flash("Edit Post")
         return redirect('/dashboard')
 
+@app.route('/tweets/<users_id>/follow', methods=['GET','POST'])
+def follows(users_id):
+    session['followee'] = users_id
+    session['follower'] = session['id']
+    mysql = connectToMySQL('reg')  
+    query = 'SELECT * FROM followers WHERE follower_id =%(follower_id)s AND followee_id =%(followee_id)s;'    
+    data = {       
+        "follower_id" : session['follower'],
+        "followee_id" : session['followee']
+        }  
+    following = mysql.query_db(query, data)
+    if following:
+        flash('Already following')
+        # print('I AMMMMMMMM RUNNING')
+        return redirect('/dashboard') 
+    else:
+        mysql = connectToMySQL('reg')       
+        query = "INSERT INTO followers (follower_id, followee_id, created_at) VALUES (%(follower_id)s, %(followee_id)s, NOW());"
+        data = {
+            "follower_id" : session['follower'],
+            "followee_id" : session['followee']
+            }
+        mysql.query_db(query, data)
+        flash('Followed!')
+        return redirect('/dashboard')
+
+
 @app.route('/logout') #Clears the session
 def logout():
     session.clear()
@@ -195,11 +222,29 @@ def logout():
 @app.route('/dashboard') #Displays all messages
 def dashboardren(): 
     name = session['name']
-    mysql = connectToMySQL('reg')       
-    tweets = mysql.query_db('SELECT * FROM tweets ORDER BY id DESC;')
-    # print(tweets)
-    return render_template('dashboard.html', tweets = tweets, name = name)
+    # session['followee'] = users_id
+    # session['follower'] = session['id']
+    mysql = connectToMySQL('reg')  
+    query = 'SELECT * FROM followers WHERE follower_id =%(follower_id)s AND followee_id =%(followee_id)s;'    
+    data = {       
+        "follower_id" : session['follower'],
+        "followee_id" : session['followee']
+        }  
+    following = mysql.query_db(query, data)
+    if following:
+        mysql = connectToMySQL('reg') 
+        query = 'SELECT * FROM tweets WHERE user_id =%(user_id)s AND user_id =%(user_id)s ORDER BY id DESC;'    
+        data = {       
+        "user_id" : session['follower'],
+        "user_id" : session['followee']
+        } 
+        tweets = mysql.query_db(query, data)  
+        return render_template('dashboard.html', tweets = tweets, name = name)
 
+          
+    # tweets = mysql.query_db('SELECT * FROM tweets ORDER BY id DESC;')
+    # print(tweets)
+  
 @app.route('/tweets/create', methods=['POST']) #Creates and posts messages in the database
 def createpost():
     if len(request.form['message'])>255 or len(request.form['message'])<1:
