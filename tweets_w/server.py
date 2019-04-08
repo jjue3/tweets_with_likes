@@ -102,15 +102,26 @@ def login():
 
 @app.route('/tweets/<tweets_id>/add_like', methods=['POST']) #Add likes
 def addlike(tweets_id):
-    # mysql = connectToMySQL('reg')         
-    # query = "INSERT INTO likes (user_id, tweet_id, created_at, updated_at) VALUES (%(user_id)s, %(tweet_id)s, NOW(), NOW());"
-    # data = {
-    #     "user_id" : session['id']
-    #     }
-    # userlog = mysql.query_db(query, data)
-    print('THIS IS WHAT I AM LOOKING FOR!!!!!')
-    print(tweets_id) 
-    return redirect('/dashboard')      
+    session['tweets_id']= tweets_id
+    mysql = connectToMySQL('reg')  
+    query = 'SELECT * FROM likes WHERE user_id =%(user_id)s AND tweet_id =%(tweet_id)s;'    
+    data = {
+        "user_id" : session['id'],
+        "tweet_id" : session['tweets_id']
+        }  
+    creater_id = mysql.query_db(query, data)
+    if creater_id:
+        return redirect('/dashboard') 
+    else:
+        mysql = connectToMySQL('reg')       
+        query = "INSERT INTO likes (user_id, tweet_id, created_at) VALUES (%(user_id)s, %(tweet_id)s, NOW());"
+        data = {
+            "user_id" : session['id'],
+            "tweet_id" : session['tweets_id']
+            }
+        mysql.query_db(query, data)
+        return redirect('/dashboard')
+
 
 @app.route('/tweets/<tweets_id>/delete', methods=['GET','POST']) #Deletes Messages
 def delete(tweets_id):
@@ -123,7 +134,6 @@ def delete(tweets_id):
         }  
     creater_id = mysql.query_db(query, data)
     if creater_id:
-        print("This is working now aren't you happy!!!!!!!")
         mysql = connectToMySQL('reg')
         query = 'DELETE FROM tweets WHERE user_id =%(user_id)s AND id =%(id)s;'
         data = {
@@ -158,14 +168,14 @@ def edit(tweets_id):
 @app.route('/tweets/<tweets_id>/update', methods=['GET','POST']) #Update Message
 def update(tweets_id):
     session['tweets_id']= tweets_id
-    print(session['tweets_id'])
-    print('wooooooooooooooow')
-    print(tweets_id)
+    # print(session['tweets_id'])
+    # print('wooooooooooooooow')
+    # print(tweets_id)
     if len(request.form['message'])>255 or len(request.form['message'])<1:
         flash('Invalid amount of characters')
         return redirect('/tweets/<tweets_id>/edit')
     else:
-        print("This is working now aren't you happy!!!!!!!")
+        # print("This is working now aren't you happy!!!!!!!")
         mysql = connectToMySQL('reg')
         query = 'UPDATE tweets SET content =%(content)s, updated_at = NOW() WHERE id =%(id)s;'
         data = {
@@ -175,7 +185,6 @@ def update(tweets_id):
         mysql.query_db(query, data)        
         flash("Edit Post")
         return redirect('/dashboard')
-
 
 @app.route('/logout') #Clears the session
 def logout():
